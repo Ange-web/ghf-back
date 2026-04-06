@@ -1,0 +1,166 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ReservationType {
+  STANDARD
+  PROMO
+  VIP
+}
+
+enum GalleryStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  clerkId      String?       @unique
+  name         String
+  email        String        @unique
+  password     String?
+  role         Role          @default(USER)
+  avatar       String?
+  phone        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  reservations Reservation[]
+  participations ContestParticipation[]
+  testimonials Testimonial[]
+  wonContests  Contest[]     @relation("ContestWinner")
+
+  @@map("users")
+}
+
+model Event {
+  id           String        @id @default(uuid())
+  title        String
+  description  String
+  date         DateTime
+  endDate      DateTime?
+  venue        String
+  address      String?
+  price        Float         @default(0)
+  capacity     Int
+  imageUrl     String?
+  tags         String[]
+  
+  // Nouveaux champs VIP/Promo
+  hasTablePromo        Boolean   @default(false)
+  tablePromoPrice      Float     @default(0)
+  tablePromoCapacity   Int       @default(0)
+  hasTableVip          Boolean   @default(false)
+  tableVipPrice        Float     @default(0)
+  tableVipCapacity     Int       @default(0)
+
+  isFeatured   Boolean       @default(false)
+  isPublished  Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  reservations Reservation[]
+  gallery      Gallery[]
+
+  @@map("events")
+}
+
+model Reservation {
+  id              String            @id @default(uuid())
+  userId          String
+  eventId         String
+  guests          Int               @default(1)
+  phone           String?
+  specialRequests String?
+  status          ReservationStatus @default(PENDING)
+  type            ReservationType   @default(STANDARD)
+  totalPrice      Float             @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("reservations")
+}
+
+model Gallery {
+  id          String        @id @default(uuid())
+  url         String
+  r2Key       String?
+  caption     String?
+  eventId     String?
+  status      GalleryStatus @default(PENDING)
+  isPublished Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@map("gallery")
+}
+
+model Contest {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  prize        String?
+  imageUrl     String?
+  startDate    DateTime @default(now())
+  endDate      DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  participations ContestParticipation[]
+  winner         User?   @relation("ContestWinner", fields: [winnerId], references: [id])
+  winnerId       String?
+
+  @@map("contests")
+}
+
+model ContestParticipation {
+  id         String   @id @default(uuid())
+  userId     String
+  contestId  String
+  answer     String?
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contestId])
+  @@map("contest_participations")
+}
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  userId      String?
+  authorName  String
+  authorRole  String?
+  content     String
+  rating      Int      @default(5)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("testimonials")
+}
