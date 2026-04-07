@@ -1,8 +1,8 @@
-// src/routes/gallery.js
+// src/routes/upload.js
 const router = require('express').Router();
 const multer = require('multer');
 const { authenticate, requireAdmin } = require('../middleware/auth');
-const ctrl = require('../controllers/galleryController');
+const { uploadToCloudinary } = require('../lib/cloudinary');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -15,10 +15,14 @@ const upload = multer({
   },
 });
 
-router.get('/', ctrl.listGallery);
-router.get('/my', authenticate, ctrl.getMyGallery);
-router.post('/', authenticate, ctrl.createFromUrl);
-router.post('/upload', authenticate, upload.single('image'), ctrl.uploadImage);
-router.delete('/:id', authenticate, requireAdmin, ctrl.deleteImage);
+router.post('/', authenticate, requireAdmin, upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier fourni' });
+    const { url } = await uploadToCloudinary(req.file.buffer, 'ghf-uploads');
+    res.status(201).json({ url });
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

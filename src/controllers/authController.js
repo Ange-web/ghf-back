@@ -23,14 +23,14 @@ function formatUser(user, token) {
 // POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, instagram } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ error: 'Cet email est déjà utilisé' });
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: { name, email, password: hashedPassword, phone, instagram },
     });
 
     const token = generateToken(user.id);

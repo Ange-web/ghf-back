@@ -141,3 +141,47 @@ exports.deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// GET /api/admin/gallery
+exports.listGallery = async (req, res, next) => {
+  try {
+    const items = await prisma.gallery.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { name: true, email: true } },
+        event: { select: { title: true } }
+      }
+    });
+
+    const formatted = items.map(item => ({
+      ...item,
+      user_name: item.user?.name || 'Administrateur',
+      status: item.status.toLowerCase()
+    }));
+
+    res.json({ data: formatted });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PATCH /api/admin/gallery/:id/status
+exports.updateGalleryStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const dbStatus = status.toUpperCase();
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(dbStatus)) {
+      return res.status(400).json({ error: 'Statut invalide' });
+    }
+    const item = await prisma.gallery.update({
+      where: { id: req.params.id },
+      data: { 
+        status: dbStatus,
+        isPublished: dbStatus === 'APPROVED'
+      }
+    });
+    res.json(item);
+  } catch (error) {
+    next(error);
+  }
+};

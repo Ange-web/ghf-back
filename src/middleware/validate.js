@@ -29,6 +29,8 @@ const schemas = {
     name: z.string().min(2, 'Nom trop court').max(100),
     email: z.string().email('Email invalide'),
     password: z.string().min(8, 'Minimum 8 caractères'),
+    phone: z.string().optional(),
+    instagram: z.string().optional(),
   }),
 
   login: z.object({
@@ -38,10 +40,10 @@ const schemas = {
 
   event: z.object({
     title: z.string().min(3).max(200),
-    description: z.string().min(10),
+    description: z.string().optional(),
     date: z.string().datetime(),
     endDate: z.string().datetime().optional(),
-    venue: z.string().min(2),
+    venue: z.string().optional(),
     address: z.string().optional(),
     price: z.number().min(0).default(0),
     capacity: z.number().int().min(1),
@@ -49,7 +51,7 @@ const schemas = {
     tags: z.array(z.string()).default([]),
     isFeatured: z.boolean().default(false),
     isPublished: z.boolean().default(true),
-  }),
+  }).passthrough(),
 
   reservation: z.object({
     eventId: z.string().uuid('ID événement invalide'),

@@ -10,5 +10,7 @@ router.get('/stats', ctrl.getStats);
 router.get('/users', ctrl.listUsers);
 router.patch('/users/:id/role', ctrl.updateUserRole);
 router.delete('/users/:id', ctrl.deleteUser);
+router.get('/gallery', ctrl.listGallery);
+router.patch('/gallery/:id/status', ctrl.updateGalleryStatus);
 
 module.exports = router;

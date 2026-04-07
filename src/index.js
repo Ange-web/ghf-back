@@ -14,6 +14,7 @@ const contestRoutes = require('./routes/contests');
 const testimonialRoutes = require('./routes/testimonials');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +66,7 @@ app.use('/api/contests', contestRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) => {

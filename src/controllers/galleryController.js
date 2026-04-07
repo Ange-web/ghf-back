@@ -1,6 +1,6 @@
 // src/controllers/galleryController.js
 const prisma = require('../lib/db');
-const { uploadToR2, deleteFromR2, getPresignedUploadUrl } = require('../lib/r2');
+const { uploadToCloudinary, deleteFromCloudinary } = require('../lib/cloudinary');
 
 // GET /api/gallery
 exports.listGallery = async (req, res, next) => {
@@ -26,16 +26,36 @@ exports.listGallery = async (req, res, next) => {
   }
 };
 
+// GET /api/gallery/my — photos submitted by the authenticated user
+exports.getMyGallery = async (req, res, next) => {
+  try {
+    const items = await prisma.gallery.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      include: { event: { select: { id: true, title: true } } },
+    });
+    res.json({ data: items });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // POST /api/gallery/upload
 exports.uploadImage = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier fourni' });
 
-    const { key, url } = await uploadToR2(req.file.buffer, req.file.originalname, 'gallery');
+    const { url, publicId } = await uploadToCloudinary(req.file.buffer, 'ghf-gallery');
     const { caption, eventId } = req.body;
 
     const item = await prisma.gallery.create({
-      data: { url, r2Key: key, caption, eventId: eventId || null },
+      data: {
+        url,
+        cloudinaryId: publicId,
+        caption,
+        eventId: eventId || null,
+        userId: req.user?.id || null,
+      },
     });
     res.status(201).json(item);
   } catch (error) {
@@ -43,13 +63,21 @@ exports.uploadImage = async (req, res, next) => {
   }
 };
 
-// GET /api/gallery/presigned
-exports.getPresignedUrl = async (req, res, next) => {
+// POST /api/gallery (create from URL — no file upload)
+exports.createFromUrl = async (req, res, next) => {
   try {
-    const { fileName } = req.query;
-    if (!fileName) return res.status(400).json({ error: 'fileName requis' });
-    const result = await getPresignedUploadUrl(fileName, 'gallery');
-    res.json(result);
+    const { url, caption, eventId } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL requise' });
+
+    const item = await prisma.gallery.create({
+      data: {
+        url,
+        caption: caption || null,
+        eventId: eventId || null,
+        userId: req.user?.id || null,
+      },
+    });
+    res.status(201).json(item);
   } catch (error) {
     next(error);
   }
@@ -61,8 +89,8 @@ exports.deleteImage = async (req, res, next) => {
     const item = await prisma.gallery.findUnique({ where: { id: req.params.id } });
     if (!item) return res.status(404).json({ error: 'Image introuvable' });
 
-    if (item.r2Key) {
-      await deleteFromR2(item.r2Key);
+    if (item.cloudinaryId) {
+      await deleteFromCloudinary(item.cloudinaryId);
     }
     await prisma.gallery.delete({ where: { id: req.params.id } });
     res.json({ message: 'Image supprimée' });

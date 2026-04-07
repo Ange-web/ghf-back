@@ -40,12 +40,14 @@ model User {
   role         Role          @default(USER)
   avatar       String?
   phone        String?
+  instagram    String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   reservations Reservation[]
   participations ContestParticipation[]
   testimonials Testimonial[]
+  gallery      Gallery[]
   wonContests  Contest[]     @relation("ContestWinner")
 
   @@map("users")
@@ -105,14 +107,16 @@ model Reservation {
 model Gallery {
   id          String        @id @default(uuid())
   url         String
-  r2Key       String?
+  cloudinaryId String?
   caption     String?
   eventId     String?
+  userId      String?
   status      GalleryStatus @default(PENDING)
   isPublished Boolean       @default(false)
   createdAt   DateTime      @default(now())
 
   event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("gallery")
 }

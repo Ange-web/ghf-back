@@ -69,7 +69,9 @@ exports.createEvent = async (req, res, next) => {
     const { 
       has_table_promo, table_promo_price, table_promo_capacity,
       has_table_vip, table_vip_price, table_vip_capacity,
-      image_url, ...rest 
+      image_url, 
+      id, createdAt, updatedAt, reservationsCount, spotsLeft, _count,
+      ...rest 
     } = req.body;
 
     const event = await prisma.event.create({ 
@@ -107,7 +109,9 @@ exports.updateEvent = async (req, res, next) => {
     const { 
       has_table_promo, table_promo_price, table_promo_capacity,
       has_table_vip, table_vip_price, table_vip_capacity,
-      image_url, ...rest 
+      image_url, 
+      id, createdAt, updatedAt, reservationsCount, spotsLeft, _count,
+      ...rest 
     } = req.body;
 
     const event = await prisma.event.update({
