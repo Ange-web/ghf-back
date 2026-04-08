@@ -7,8 +7,16 @@ exports.listTestimonials = async (req, res, next) => {
     const testimonials = await prisma.testimonial.findMany({
       where: { isPublished: true },
       orderBy: { createdAt: 'desc' },
-      take: 20,
-      include: { user: { select: { avatar: true } } },
+      take: 6,
+      select: {
+        id: true,
+        authorName: true,
+        authorRole: true,
+        content: true,
+        rating: true,
+        createdAt: true,
+        user: { select: { avatar: true } },
+      },
     });
     res.json(testimonials);
   } catch (error) {

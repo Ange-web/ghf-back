@@ -4,7 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const { cacheControl } = require('./middleware/cache');
 
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
@@ -18,6 +20,16 @@ const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ── Compression ───────────────────────────────────────────
+app.use(compression({
+  level: 6,           // bon compromis vitesse/compression
+  threshold: 1024,    // ne compresser que les réponses > 1KB
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  },
+}));
 
 // ── Sécurité ──────────────────────────────────────────────
 app.use(helmet());
@@ -72,11 +84,11 @@ app.get('/api', (req, res) => {
 
 // ── Routes ────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
-app.use('/api/events', eventRoutes);
+app.use('/api/events', cacheControl(60, 120), eventRoutes);
 app.use('/api/reservations', reservationRoutes);
-app.use('/api/gallery', galleryRoutes);
-app.use('/api/contests', contestRoutes);
-app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/gallery', cacheControl(60, 120), galleryRoutes);
+app.use('/api/contests', cacheControl(60, 120), contestRoutes);
+app.use('/api/testimonials', cacheControl(120, 300), testimonialRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);

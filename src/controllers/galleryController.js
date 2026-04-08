@@ -5,7 +5,7 @@ const { uploadToCloudinary, deleteFromCloudinary } = require('../lib/cloudinary'
 // GET /api/gallery
 exports.listGallery = async (req, res, next) => {
   try {
-    const { eventId, page = 1, limit = 20 } = req.query;
+    const { eventId, page = 1, limit = 12 } = req.query;
     const where = { isPublished: true };
     if (eventId) where.eventId = eventId;
 
@@ -15,12 +15,19 @@ exports.listGallery = async (req, res, next) => {
         orderBy: { createdAt: 'desc' },
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
-        include: { event: { select: { id: true, title: true } } },
+        select: {
+          id: true,
+          url: true,
+          caption: true,
+          eventId: true,
+          createdAt: true,
+          event: { select: { id: true, title: true } },
+        },
       }),
       prisma.gallery.count({ where }),
     ]);
 
-    res.json({ data: items, pagination: { total, page: Number(page), limit: Number(limit) } });
+    res.json({ data: items, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) } });
   } catch (error) {
     next(error);
   }
