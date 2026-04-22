@@ -155,16 +155,32 @@ model ContestParticipation {
 }
 
 model Testimonial {
-  id          String   @id @default(uuid())
-  userId      String?
-  authorName  String
-  authorRole  String?
-  content     String
-  rating      Int      @default(5)
-  isPublished Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id                 String   @id @default(uuid())
+  userId             String?
+  authorName         String
+  authorRole         String?
+  content            String
+  originalContent    String?  // Contenu original Instagram avant modification
+  rating             Int      @default(5)
+  isPublished        Boolean  @default(true)
+  source             String   @default("manual") // "manual" | "instagram"
+  instagramMessageId String?  @unique            // ID unique du DM Meta
+  instagramUsername  String?                     // Pseudo Instagram de l'expéditeur
+  instagramAvatar    String?                     // URL avatar Instagram
+  createdAt          DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("testimonials")
+}
+
+// Stockage du Long-lived Token Instagram (1 seul enregistrement)
+model InstagramToken {
+  id          String   @id @default("singleton")
+  accessToken String               // Token chiffré en prod
+  expiresAt   DateTime
+  pageId      String?              // Instagram Page ID lié
+  updatedAt   DateTime @updatedAt
+
+  @@map("instagram_tokens")
 }

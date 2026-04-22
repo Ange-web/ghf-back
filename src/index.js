@@ -17,6 +17,7 @@ const testimonialRoutes = require('./routes/testimonials');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 const uploadRoutes = require('./routes/upload');
+const instagramRoutes = require('./routes/instagram');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -92,6 +93,7 @@ app.use('/api/testimonials', cacheControl(120, 300), testimonialRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/instagram', instagramRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) => {
